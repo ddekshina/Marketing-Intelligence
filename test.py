@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # -------------------------
 # Helper: clean column names
@@ -110,3 +111,32 @@ combined["gross_margin_pct"] = combined["gross_profit"] / combined["total_revenu
 print("\n=== Business + Marketing Combined ===")
 print(combined[["date", "total_revenue", "spend", "attributed_revenue",
                 "marketing_revenue_pct", "marketing_spend_pct", "gross_margin_pct"]].head())
+
+
+# ---- Plot 1: Spend vs Revenue over Time ----
+plt.figure(figsize=(12,5))
+
+plt.plot(combined["date"], combined["spend"], label="Marketing Spend", color="red")
+plt.plot(combined["date"], combined["total_revenue"], label="Total Revenue", color="blue")
+
+plt.xlabel("Date")
+plt.ylabel("Amount ($)")
+plt.title("Spend vs Revenue Over Time")
+plt.legend()
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# ---- Plot 2: ROAS over Time ----
+plt.figure(figsize=(12,5))
+
+plt.plot(combined["date"], combined["roas"], label="ROAS", color="green")
+
+plt.axhline(y=1, color="gray", linestyle="--", linewidth=1)  # breakeven line
+plt.xlabel("Date")
+plt.ylabel("ROAS (Revenue ÷ Spend)")
+plt.title("ROAS (Return on Ad Spend) Over Time")
+plt.legend()
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
