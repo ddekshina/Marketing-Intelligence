@@ -169,3 +169,32 @@ plt.ylabel("ROAS")
 plt.title("ROAS by Channel")
 plt.tight_layout()
 plt.show()
+
+# -------------------------
+# Campaign Leaderboard (Top 10 by ROAS)
+# -------------------------
+top_campaigns = campaign_summary.sort_values("roas", ascending=False).head(10)
+
+plt.figure(figsize=(12,6))
+plt.barh(top_campaigns["campaign"], top_campaigns["roas"], color="green")
+plt.axvline(x=1, color="gray", linestyle="--", linewidth=1)  # breakeven line
+plt.xlabel("ROAS")
+plt.title("Top 10 Campaigns by ROAS")
+plt.gca().invert_yaxis()  # highest at the top
+plt.tight_layout()
+plt.show()
+
+# -------------------------
+# Campaign Leaderboard (Top 10 by Spend)
+# -------------------------
+biggest_campaigns = campaign_summary.sort_values("spend", ascending=False).head(10)
+
+plt.figure(figsize=(12,6))
+plt.barh(biggest_campaigns["campaign"], biggest_campaigns["spend"], color="red")
+plt.xlabel("Spend ($)")
+plt.title("Top 10 Campaigns by Spend")
+plt.gca().invert_yaxis()
+plt.tight_layout()
+plt.show()
+
+
