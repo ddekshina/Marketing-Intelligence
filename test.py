@@ -87,3 +87,32 @@ channel_summary["ROAS"] = channel_summary["attributed revenue"] / channel_summar
 
 print("\n=== Channel summary ===")
 print(channel_summary)
+
+# ---- Load Business data ----
+business = pd.read_csv("data/Business.csv")
+
+print("\n=== Business data ===")
+print(business.head())
+
+# ---- Merge with daily marketing summary ----
+# First, aggregate all channels daily
+marketing_daily = (
+    all_data.groupby("date", as_index=False)
+      .agg({
+          "impression": "sum",
+          "clicks": "sum",
+          "spend": "sum",
+          "attributed revenue": "sum"
+      })
+)
+
+# Add marketing metrics
+marketing_daily["CPC"] = marketing_daily["spend"] / marketing_daily["clicks"]
+marketing_daily["CTR"] = marketing_daily["clicks"] / marketing_daily["impression"]
+marketing_daily["ROAS"] = marketing_daily["attributed revenue"] / marketing_daily["spend"]
+
+# Merge on 'date' to align marketing with business KPIs
+combined = pd.merge(business, marketing_daily, on="date", how="left")
+
+print("\n=== Business + Marketing combined ===")
+print(combined.head())
