@@ -49,12 +49,12 @@ def load_data():
     daily_summary["roas"] = daily_summary["attributed_revenue"] / daily_summary["spend"].replace(0, pd.NA)
 
     combined = pd.merge(business, daily_summary, on="date", how="left")
-    return all_data, business, combined
+    return all_data, business, combined, daily_summary
 
 # -------------------------
 # Data Prep
 # -------------------------
-all_data, business, combined = load_data()
+all_data, business, combined, daily_summary = load_data()
 
 # Ensure datetime
 combined["date"] = pd.to_datetime(combined["date"], errors="coerce")
@@ -147,3 +147,26 @@ with col2:
     top_spend = campaign_summary.sort_values("spend", ascending=False).head(10)
     st.write("### Top 10 Campaigns by Spend")
     st.dataframe(top_spend[["campaign", "spend", "attributed_revenue", "roas"]])
+
+# -------------------------
+# Anomaly Detection & Recommendations
+# -------------------------
+st.subheader("⚠️ Anomaly Detection & Recommendations")
+
+# Low ROAS campaigns
+low_roas = campaign_summary[campaign_summary["roas"] < 0.5]
+if not low_roas.empty:
+    st.write("### 🚨 Low ROAS Campaigns (ROAS < 0.5)")
+    st.dataframe(low_roas[["campaign", "spend", "attributed_revenue", "roas"]])
+    st.warning("Recommendation: Pause or optimize these campaigns — they are not cost-effective.")
+
+# Spend spikes
+spend_mean = daily_summary["spend"].mean()
+spend_std = daily_summary["spend"].std()
+spike_threshold = spend_mean + 3 * spend_std
+spikes = daily_summary[daily_summary["spend"] > spike_threshold]
+
+if not spikes.empty:
+    st.write("### 🚨 Spend Spikes Detected")
+    st.dataframe(spikes[["date", "spend", "attributed_revenue", "roas"]])
+    st.warning("Recommendation: Investigate these dates for possible overspending or errors.")
