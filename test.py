@@ -198,3 +198,100 @@ plt.tight_layout()
 plt.show()
 
 
+
+
+
+# -------------------------
+# Data Quality & Sanity Checks
+# -------------------------
+
+print("\n=== DATA QUALITY CHECKS ===")
+
+# 1. Missing values
+missing_counts = all_data.isnull().sum()
+print("\nMissing values per column:")
+print(missing_counts)
+
+# 2. Check for negative values (shouldn't exist in spend, clicks, revenue)
+for col in ["impression", "clicks", "spend", "attributed_revenue"]:
+    negatives = (all_data[col] < 0).sum()
+    if negatives > 0:
+        print(f"⚠️ Warning: {negatives} negative values found in '{col}'")
+
+# 3. Division by zero risks
+zero_clicks = (all_data["clicks"] == 0).sum()
+zero_spend = (all_data["spend"] == 0).sum()
+print(f"\nRows with zero clicks (CPC risk): {zero_clicks}")
+print(f"Rows with zero spend (ROAS risk): {zero_spend}")
+
+# 4. Sanity check totals: marketing spend vs channel summary sum
+total_spend = all_data["spend"].sum()
+channel_spend_sum = channel_summary["spend"].sum()
+print(f"\nTotal spend (all_data): {total_spend:.2f}")
+print(f"Channel summary spend sum: {channel_spend_sum:.2f}")
+if abs(total_spend - channel_spend_sum) > 1e-6:
+    print("⚠️ Mismatch between all_data and channel_summary totals!")
+
+# 5. Compare marketing revenue vs business revenue
+if "total_revenue" in combined.columns:
+    total_attr_rev = all_data["attributed_revenue"].sum()
+    total_bus_rev = combined["total_revenue"].sum()
+    print(f"\nTotal attributed revenue (marketing): {total_attr_rev:.2f}")
+    print(f"Total revenue (business): {total_bus_rev:.2f}")
+    if total_attr_rev > total_bus_rev:
+        print("⚠️ Attributed revenue is larger than total revenue — possible over-attribution.")
+
+# -------------------------
+# Anomaly Detection
+# -------------------------
+print("\n=== ANOMALY DETECTION ===")
+
+# 1. Low ROAS campaigns (below 0.5)
+low_roas = campaign_summary[campaign_summary["roas"] < 0.5]
+if not low_roas.empty:
+    print("\n⚠️ Campaigns with ROAS < 0.5 (inefficient):")
+    print(low_roas[["campaign", "spend", "attributed_revenue", "roas"]].head(10))
+
+# 2. High spend spikes (daily spend > mean + 3*std)
+spend_mean = daily_summary["spend"].mean()
+spend_std = daily_summary["spend"].std()
+spike_threshold = spend_mean + 3 * spend_std
+
+spikes = daily_summary[daily_summary["spend"] > spike_threshold]
+if not spikes.empty:
+    print(f"\n⚠️ Detected {len(spikes)} spend spike(s):")
+    print(spikes[["date", "spend", "attributed_revenue", "roas"]].head(10))
+
+# -------------------------
+# Recommendations
+# -------------------------
+print("\n=== RECOMMENDATIONS ===")
+
+recommendations = []
+
+# 1. Flag campaigns with low ROAS
+for _, row in low_roas.iterrows():
+    recommendations.append(
+        f"Pause or review campaign '{row['campaign']}' — ROAS = {row['roas']:.2f}, Spend = ${row['spend']:.0f}"
+    )
+
+# 2. Flag spend spikes
+for _, row in spikes.iterrows():
+    recommendations.append(
+        f"Check spend spike on {row['date'].date()} — Spend = ${row['spend']:.0f}, ROAS = {row['roas']:.2f}"
+    )
+
+# 3. Highlight best-performing campaign
+best_campaign = campaign_summary.sort_values("roas", ascending=False).head(1)
+if not best_campaign.empty:
+    row = best_campaign.iloc[0]
+    recommendations.append(
+        f"Consider scaling campaign '{row['campaign']}' — ROAS = {row['roas']:.2f}, Spend = ${row['spend']:.0f}"
+    )
+
+# Print final recommendations
+if recommendations:
+    for r in recommendations:
+        print("👉", r)
+else:
+    print("No major recommendations — campaigns are performing normally.")
