@@ -140,3 +140,32 @@ plt.legend()
 plt.xticks(rotation=45)
 plt.tight_layout()
 plt.show()
+
+# -------------------------
+# Channel Breakdown: Spend vs Revenue
+# -------------------------
+plt.figure(figsize=(10,6))
+
+plt.bar(channel_summary["channel"], channel_summary["spend"], label="Spend", color="red", alpha=0.6)
+plt.bar(channel_summary["channel"], channel_summary["attributed_revenue"], label="Revenue", color="blue", alpha=0.6)
+
+plt.xlabel("Channel")
+plt.ylabel("Amount ($)")
+plt.title("Spend vs Revenue by Channel")
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# -------------------------
+# Channel Breakdown: ROAS
+# -------------------------
+plt.figure(figsize=(10,6))
+
+plt.bar(channel_summary["channel"], channel_summary["roas"], color="green")
+
+plt.axhline(y=1, color="gray", linestyle="--", linewidth=1)  # breakeven line
+plt.xlabel("Channel")
+plt.ylabel("ROAS")
+plt.title("ROAS by Channel")
+plt.tight_layout()
+plt.show()
